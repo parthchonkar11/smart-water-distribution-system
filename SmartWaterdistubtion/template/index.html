@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Smart Water Distribution Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body { font-family: Arial; background:#f4f6f9; text-align:center; }
+    .card { display:inline-block; padding:20px; margin:10px; background:white; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); min-width:200px; }
+    #map { height:400px; margin:20px; border-radius:12px; }
+  </style>
+</head>
+
+<body>
+<h2>💧 Smart Water Distribution Dashboard</h2>
+
+<div class="card"><h3>Flow Rate</h3><h2 id="flow">0</h2><p>L/min</p></div>
+<div class="card"><h3>Pressure</h3><h2 id="pressure">0</h2><p>Bar</p></div>
+<div class="card"><h3>Status</h3><h2 id="status">Normal</h2></div>
+<div class="card"><h3>Zone</h3><h2 id="zone">Zone 1</h2></div>
+
+<div id="map"></div>
+
+<script>
+var map = L.map('map').setView([17.6599, 75.9064], 13);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+var greenIcon = new L.Icon({ iconUrl:'https://maps.google.com/mapfiles/ms/icons/green-dot.png', iconSize:[32,32] });
+var redIcon = new L.Icon({ iconUrl:'https://maps.google.com/mapfiles/ms/icons/red-dot.png', iconSize:[32,32] });
+
+var zoneMarker = L.marker([17.6599,75.9064],{ icon: greenIcon }).addTo(map);
+zoneMarker.bindPopup("Zone 1 Monitoring");
+
+setInterval(() => {
+  fetch("/data")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("flow").innerText = data.flow.toFixed(2);
+      document.getElementById("pressure").innerText = data.pressure.toFixed(2);
+      document.getElementById("status").innerText = data.status;
+      document.getElementById("zone").innerText = data.zone;
+
+      if(data.status.includes("Leak")){
+        zoneMarker.setIcon(redIcon);
+        zoneMarker.bindPopup("🚨 Leak Detected<br>Pressure: "+data.pressure);
+      } else {
+        zoneMarker.setIcon(greenIcon);
+        zoneMarker.bindPopup("✅ Normal<br>Pressure: "+data.pressure);
+      }
+    });
+}, 1000);
+</script>
+
+</body>
+</html>
